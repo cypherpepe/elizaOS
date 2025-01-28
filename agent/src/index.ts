@@ -137,6 +137,7 @@ import { nvidiaNimPlugin } from "@elizaos/plugin-nvidia-nim";
 import { zxPlugin } from "@elizaos/plugin-0x";
 import { hyperbolicPlugin } from "@elizaos/plugin-hyperbolic";
 import { litPlugin } from "@elizaos/plugin-lit";
+import { orderlyPlugin } from "@elizaos/plugin-orderly";
 import Database from "better-sqlite3";
 import fs from "fs";
 import net from "net";
@@ -1297,6 +1298,14 @@ export async function createAgent(
         ]
             .flat()
             .filter(Boolean),
+            getSecret(character, "EVM_PRIVATE_KEY") &&
+            getSecret(character, "EVM_PRIVATE_KEY")?.startsWith("0x") &&
+            getSecret(character, "ORDERLY_PRIVATE_KEY") &&
+            getSecret(character, "ORDERLY_NETWORK") &&
+            getSecret(character, "ORDERLY_BROKER_ID")
+                ? orderlyPlugin
+                : null,
+        ].filter(Boolean),
         providers: [],
         managers: [],
         cacheManager: cache,

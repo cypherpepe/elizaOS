@@ -1,0 +1,39 @@
+{
+    "name": "@elizaos/plugin-orderly",
+    "version": "0.1.0",
+    "type": "module",
+    "main": "dist/index.js",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        "./package.json": "./package.json",
+        ".": {
+            "import": {
+                "@elizaos/source": "./src/index.ts",
+                "types": "./dist/index.d.ts",
+                "default": "./dist/index.js"
+            }
+        }
+    },
+    "files": [
+        "dist"
+    ],
+    "dependencies": {
+        "@elizaos/core": "workspace:*",
+        "@elizaos/plugin-evm": "workspace:*",
+        "@noble/ed25519": "^2.2.3",
+        "@orderly.network/types": "^2.0.2",
+        "bignumber.js": "9.1.2",
+        "bs58": "6.0.0",
+        "ts-pattern": "^5.6.2",
+        "tsup": "8.3.5",
+        "zod": "3.23.8"
+    },
+    "scripts": {
+        "build": "tsup --format esm,cjs --dts",
+        "dev": "tsup --format esm --dts --watch",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "lint": "eslint . --fix"
+    }
+}
