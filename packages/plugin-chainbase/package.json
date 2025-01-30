@@ -7,9 +7,13 @@
     "dependencies": {
         "@elizaos/core": "workspace:*"
     },
+    "devDependencies": {
+        "vitest": "^2.1.5"
+    },
     "scripts": {
         "build": "tsup --format esm --dts",
         "dev": "tsup --format esm --dts --watch",
-        "lint": "eslint --fix  --cache ."
+        "lint": "eslint --fix  --cache .",
+        "test": "vitest run"
     }
 }
