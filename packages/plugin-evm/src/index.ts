@@ -6,7 +6,7 @@ export * from "./types";
 
 import type { Plugin } from "@elizaos/core";
 import { bridgeAction } from "./actions/bridge";
-import { swapAction } from "./actions/swap";
+import { swapAction } from "./actions/paraswap";
 import { transferAction } from "./actions/transfer";
 import { evmWalletProvider } from "./providers/wallet";
 
