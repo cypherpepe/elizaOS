@@ -136,12 +136,11 @@ import { holdstationPlugin } from "@elizaos/plugin-holdstation";
 import { nvidiaNimPlugin } from "@elizaos/plugin-nvidia-nim";
 import { zxPlugin } from "@elizaos/plugin-0x";
 import { hyperbolicPlugin } from "@elizaos/plugin-hyperbolic";
-import { litPlugin } from "@elizaos/plugin-lit";
 import Database from "better-sqlite3";
-import fs from "fs";
-import net from "net";
-import path from "path";
-import { fileURLToPath } from "url";
+import fs from "node:fs";
+import net from "node:net";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import yargs from "yargs";
 import { emailPlugin } from "@elizaos/plugin-email";
 import { emailAutomationPlugin } from "@elizaos/plugin-email-automation";
@@ -204,38 +203,52 @@ function tryLoadFile(filePath: string): string | null {
         return null;
     }
 }
-function mergeCharacters(base: Character, child: Character): Character {
-    const mergeObjects = (baseObj: any, childObj: any) => {
-        const result: any = {};
-        const keys = new Set([
-            ...Object.keys(baseObj || {}),
-            ...Object.keys(childObj || {}),
-        ]);
-        keys.forEach((key) => {
-            if (
-                typeof baseObj[key] === "object" &&
-                typeof childObj[key] === "object" &&
-                !Array.isArray(baseObj[key]) &&
-                !Array.isArray(childObj[key])
-            ) {
-                result[key] = mergeObjects(baseObj[key], childObj[key]);
-            } else if (
-                Array.isArray(baseObj[key]) ||
-                Array.isArray(childObj[key])
-            ) {
-                result[key] = [
-                    ...(baseObj[key] || []),
-                    ...(childObj[key] || []),
-                ];
-            } else {
-                result[key] =
-                    childObj[key] !== undefined ? childObj[key] : baseObj[key];
-            }
-        });
-        return result;
-    };
-    return mergeObjects(base, child);
-}
+function mergeCharacters(base: Character, child: Partial<Character>): Character {
+    if (!base) return { ...child, name: child.name || '' } as Character;
+    if (!child) return base;
+  
+    const result = { ...base };
+    const allKeys = new Set([...Object.keys(base), ...Object.keys(child)]);
+  
+    for (const key of allKeys) {
+      const baseValue = base[key];
+      const childValue = child[key];
+  
+      if (childValue === undefined) {
+        result[key] = baseValue;
+        continue;
+      }
+  
+      if (baseValue === undefined) {
+        result[key] = childValue;
+        continue;
+      }
+  
+      if (Array.isArray(baseValue) || Array.isArray(childValue)) {
+        result[key] = [
+          ...(Array.isArray(baseValue) ? baseValue : []),
+          ...(Array.isArray(childValue) ? childValue : [])
+        ];
+        continue;
+      }
+  
+      if (
+        baseValue &&
+        childValue &&
+        typeof baseValue === "object" &&
+        typeof childValue === "object"
+      ) {
+        result[key] = mergeCharacters(baseValue, childValue);
+        continue;
+      }
+  
+      result[key] = childValue;
+    }
+  
+    return result as Character;
+  }
+  
+
 function isAllStrings(arr: unknown[]): boolean {
     return Array.isArray(arr) && arr.every((item) => typeof item === "string");
 }
@@ -261,7 +274,7 @@ export async function loadCharacterFromOnchain(): Promise<Character[]> {
                 const settingKey = key.slice(characterPrefix.length);
                 settings[settingKey] = value;
                 return settings;
-            }, {});
+            }, {} as Character["settings"]);
 
         if (Object.keys(characterSettings).length > 0) {
             character.settings = character.settings || {};
@@ -319,7 +332,7 @@ async function loadCharactersFromUrl(url: string): Promise<Character[]> {
 
 async function jsonToCharacter(
     filePath: string,
-    character: any
+    character: Partial<Character>
 ): Promise<Character> {
     validateCharacterConfig(character);
 
@@ -332,7 +345,7 @@ async function jsonToCharacter(
         .filter(([key]) => key.startsWith(characterPrefix))
         .reduce((settings, [key, value]) => {
             const settingKey = key.slice(characterPrefix.length);
-            return { ...settings, [settingKey]: value };
+            return { ...settings, [settingKey]: value } as Character["settings"];
         }, {});
     if (Object.keys(characterSettings).length > 0) {
         character.settings = character.settings || {};
@@ -342,22 +355,24 @@ async function jsonToCharacter(
         };
     }
     // Handle plugins
-    character.plugins = await handlePluginImporting(character.plugins);
+    character.plugins = await handlePluginImporting(character.plugins as unknown as Array<string>);
     if (character.extends) {
         elizaLogger.info(
             `Merging  ${character.name} character with parent characters`
         );
+        let mergedCharacter = character;
         for (const extendPath of character.extends) {
             const baseCharacter = await loadCharacter(
                 path.resolve(path.dirname(filePath), extendPath)
             );
-            character = mergeCharacters(baseCharacter, character);
+            mergedCharacter = mergeCharacters(baseCharacter, mergedCharacter);
             elizaLogger.info(
-                `Merged ${character.name} with ${baseCharacter.name}`
+                `Merged ${mergedCharacter.name} with ${baseCharacter.name}`
             );
         }
+        return mergedCharacter as Character;
     }
-    return character;
+    return character as Character;
 }
 
 async function loadCharacter(filePath: string): Promise<Character> {
@@ -373,7 +388,6 @@ async function loadCharacterTryPath(characterPath: string): Promise<Character> {
     let content: string | null = null;
     let resolvedPath = "";
 
-    // Try different path resolutions in order
     const pathsToTry = [
         characterPath, // exact path as specified
         path.resolve(process.cwd(), characterPath), // relative to cwd
@@ -388,13 +402,13 @@ async function loadCharacterTryPath(characterPath: string): Promise<Character> {
         ), // relative to project root characters dir
     ];
 
-    elizaLogger.info(
-        "Trying paths:",
-        pathsToTry.map((p) => ({
+    elizaLogger.info("Trying paths:");
+    for (const p of pathsToTry) {
+        elizaLogger.info({
             path: p,
             exists: fs.existsSync(p),
-        }))
-    );
+        });
+    }
 
     for (const tryPath of pathsToTry) {
         content = tryLoadFile(tryPath);
@@ -409,7 +423,9 @@ async function loadCharacterTryPath(characterPath: string): Promise<Character> {
             `Error loading character from ${characterPath}: File not found in any of the expected locations`
         );
         elizaLogger.error("Tried the following paths:");
-        pathsToTry.forEach((p) => elizaLogger.error(` - ${p}`));
+        for (const p of pathsToTry) {
+            elizaLogger.error(` - ${p}`);
+        }
         throw new Error(
             `Error loading character from ${characterPath}: File not found in any of the expected locations`
         );
@@ -435,9 +451,9 @@ async function readCharactersFromStorage(
         const uploadDir = path.join(process.cwd(), "data", "characters");
         await fs.promises.mkdir(uploadDir, { recursive: true });
         const fileNames = await fs.promises.readdir(uploadDir);
-        fileNames.forEach((fileName) => {
+        for (const fileName of fileNames) { 
             characterPaths.push(path.join(uploadDir, fileName));
-        });
+        }
     } catch (err) {
         elizaLogger.error(`Error reading directory: ${err.message}`);
     }
@@ -463,7 +479,7 @@ export async function loadCharacters(
                     characterPath
                 );
                 loadedCharacters.push(character);
-            } catch (e) {
+            } catch {
                 process.exit(1);
             }
         }
@@ -496,10 +512,9 @@ async function handlePluginImporting(plugins: string[]) {
                 try {
                     const importedPlugin = await import(plugin);
                     const functionName =
-                        plugin
+                        `${plugin
                             .replace("@elizaos/plugin-", "")
-                            .replace(/-./g, (x) => x[1].toUpperCase()) +
-                        "Plugin"; // Assumes plugin function is camelCased with Plugin suffix
+                            .replace(/-./g, (x) => x[1].toUpperCase())}Plugin`; // Assumes plugin function is camelCased with Plugin suffix
                     return (
                         importedPlugin.default || importedPlugin[functionName]
                     );
@@ -513,9 +528,8 @@ async function handlePluginImporting(plugins: string[]) {
             })
         );
         return importedPlugins;
-    } else {
-        return [];
     }
+        return [];
 }
 
 export function getTokenForProvider(
@@ -672,121 +686,116 @@ export function getTokenForProvider(
                 character.settings?.secrets?.LIVEPEER_GATEWAY_URL ||
                 settings.LIVEPEER_GATEWAY_URL
             );
-        default:
+        default: {
             const errorMessage = `Failed to get token - unsupported model provider: ${provider}`;
             elizaLogger.error(errorMessage);
             throw new Error(errorMessage);
+        }
     }
 }
 
 function initializeDatabase(dataDir: string) {
-    if (process.env.MONGODB_CONNECTION_STRING) {
-        elizaLogger.log("Initializing database on MongoDB Atlas");
-        const client = new MongoClient(process.env.MONGODB_CONNECTION_STRING, {
-            maxPoolSize: 100,
-            minPoolSize: 5,
-            maxIdleTimeMS: 60000,
-            connectTimeoutMS: 10000,
-            serverSelectionTimeoutMS: 5000,
-            socketTimeoutMS: 45000,
-            compressors: ["zlib"],
-            retryWrites: true,
-            retryReads: true,
-        });
-
-        const dbName = process.env.MONGODB_DATABASE || "elizaAgent";
-        const db = new MongoDBDatabaseAdapter(client, dbName);
-
-        // Test the connection
-        db.init()
-            .then(() => {
-                elizaLogger.success("Successfully connected to MongoDB Atlas");
-            })
-            .catch((error) => {
-                elizaLogger.error("Failed to connect to MongoDB Atlas:", error);
-                throw error; // Re-throw to handle it in the calling code
+    let db;
+    
+    switch (true) {
+        case !!process.env.MONGODB_CONNECTION_STRING: {
+            elizaLogger.log("Initializing database on MongoDB Atlas");
+            const client = new MongoClient(process.env.MONGODB_CONNECTION_STRING, {
+                maxPoolSize: 100,
+                minPoolSize: 5,
+                maxIdleTimeMS: 60000,
+                connectTimeoutMS: 10000,
+                serverSelectionTimeoutMS: 5000,
+                socketTimeoutMS: 45000,
+                compressors: ["zlib"],
+                retryWrites: true,
+                retryReads: true,
             });
 
-        return db;
-    } else if (process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY) {
-        elizaLogger.info("Initializing Supabase connection...");
-        const db = new SupabaseDatabaseAdapter(
-            process.env.SUPABASE_URL,
-            process.env.SUPABASE_ANON_KEY
-        );
+            const dbName = process.env.MONGODB_DATABASE || "elizaAgent";
+            db = new MongoDBDatabaseAdapter(client, dbName);
 
-        // Test the connection
-        db.init()
-            .then(() => {
-                elizaLogger.success(
-                    "Successfully connected to Supabase database"
-                );
-            })
-            .catch((error) => {
-                elizaLogger.error("Failed to connect to Supabase:", error);
+            db.init()
+                .then(() => {
+                    elizaLogger.success("Successfully connected to MongoDB Atlas");
+                })
+                .catch((error) => {
+                    elizaLogger.error("Failed to connect to MongoDB Atlas:", error);
+                    throw error;
+                });
+            break;
+        }
+
+        case !!(process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY):
+            elizaLogger.info("Initializing Supabase connection...");
+            db = new SupabaseDatabaseAdapter(
+                process.env.SUPABASE_URL,
+                process.env.SUPABASE_ANON_KEY
+            );
+
+            db.init()
+                .then(() => {
+                    elizaLogger.success("Successfully connected to Supabase database");
+                })
+                .catch((error) => {
+                    elizaLogger.error("Failed to connect to Supabase:", error);
+                });
+            break;
+
+        case !!process.env.POSTGRES_URL:
+            elizaLogger.info("Initializing PostgreSQL connection...");
+            db = new PostgresDatabaseAdapter({
+                connectionString: process.env.POSTGRES_URL,
+                parseInputs: true,
             });
 
-        return db;
-    } else if (process.env.POSTGRES_URL) {
-        elizaLogger.info("Initializing PostgreSQL connection...");
-        const db = new PostgresDatabaseAdapter({
-            connectionString: process.env.POSTGRES_URL,
-            parseInputs: true,
-        });
+            db.init()
+                .then(() => {
+                    elizaLogger.success("Successfully connected to PostgreSQL database");
+                })
+                .catch((error) => {
+                    elizaLogger.error("Failed to connect to PostgreSQL:", error);
+                });
+            break;
 
-        // Test the connection
-        db.init()
-            .then(() => {
-                elizaLogger.success(
-                    "Successfully connected to PostgreSQL database"
-                );
-            })
-            .catch((error) => {
-                elizaLogger.error("Failed to connect to PostgreSQL:", error);
+        case !!process.env.PGLITE_DATA_DIR:
+            elizaLogger.info("Initializing PgLite adapter...");
+            db = new PGLiteDatabaseAdapter({
+                dataDir: process.env.PGLITE_DATA_DIR,
             });
+            break;
 
-        return db;
-    } else if (process.env.PGLITE_DATA_DIR) {
-        elizaLogger.info("Initializing PgLite adapter...");
-        // `dataDir: memory://` for in memory pg
-        const db = new PGLiteDatabaseAdapter({
-            dataDir: process.env.PGLITE_DATA_DIR,
-        });
-        return db;
-    } else if (
-        process.env.QDRANT_URL &&
-        process.env.QDRANT_KEY &&
-        process.env.QDRANT_PORT &&
-        process.env.QDRANT_VECTOR_SIZE
-    ) {
-        elizaLogger.info("Initializing Qdrant adapter...");
-        const db = new QdrantDatabaseAdapter(
-            process.env.QDRANT_URL,
-            process.env.QDRANT_KEY,
-            Number(process.env.QDRANT_PORT),
-            Number(process.env.QDRANT_VECTOR_SIZE)
-        );
-        return db;
-    } else {
-        const filePath =
-            process.env.SQLITE_FILE ?? path.resolve(dataDir, "db.sqlite");
-        elizaLogger.info(`Initializing SQLite database at ${filePath}...`);
-        const db = new SqliteDatabaseAdapter(new Database(filePath));
+        case !!(process.env.QDRANT_URL && 
+                process.env.QDRANT_KEY && 
+                process.env.QDRANT_PORT && 
+                process.env.QDRANT_VECTOR_SIZE):
+            elizaLogger.info("Initializing Qdrant adapter...");
+            db = new QdrantDatabaseAdapter(
+                process.env.QDRANT_URL,
+                process.env.QDRANT_KEY,
+                Number(process.env.QDRANT_PORT),
+                Number(process.env.QDRANT_VECTOR_SIZE)
+            );
+            break;
 
-        // Test the connection
-        db.init()
-            .then(() => {
-                elizaLogger.success(
-                    "Successfully connected to SQLite database"
-                );
-            })
-            .catch((error) => {
-                elizaLogger.error("Failed to connect to SQLite:", error);
-            });
+        default: {
+            const filePath = process.env.SQLITE_FILE ?? path.resolve(dataDir, "db.sqlite");
+            elizaLogger.info(`Initializing SQLite database at ${filePath}...`);
+            db = new SqliteDatabaseAdapter(new Database(filePath));
 
-        return db;
+            db.init()
+                .then(() => {
+                    elizaLogger.success("Successfully connected to SQLite database");
+                })
+                .catch((error) => {
+                    elizaLogger.error("Failed to connect to SQLite:", error);
+                });
+        }
     }
+
+    return db;
 }
+
 
 // also adds plugins from character file into the runtime
 export async function initializeClients(
@@ -973,7 +982,7 @@ export async function createAgent(
     //     elizaLogger.log("Verifiable inference adapter initialized");
     // }
     // Initialize Opacity adapter if environment variables are present
-    let verifiableInferenceAdapter;
+    let verifiableInferenceAdapter: VerifiableInferenceAdapter;
     if (
         process.env.OPACITY_TEAM_ID &&
         process.env.OPACITY_CLOUDFLARE_NAME &&
@@ -1064,8 +1073,7 @@ export async function createAgent(
                 ? nearPlugin
                 : null,
             getSecret(character, "EVM_PUBLIC_KEY") ||
-            (getSecret(character, "WALLET_PUBLIC_KEY") &&
-                getSecret(character, "WALLET_PUBLIC_KEY")?.startsWith("0x"))
+            (getSecret(character, "WALLET_PUBLIC_KEY")?.startsWith("0x"))
                 ? evmPlugin
                 : null,
             (getSecret(character, "EVM_PUBLIC_KEY") ||

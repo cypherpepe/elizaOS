@@ -30,7 +30,6 @@
 		"@echogarden/kissfft-wasm": "0.2.0",
 		"@echogarden/speex-resampler-wasm": "0.2.1",
 		"@elizaos/core": "workspace:*",
-		"@elizaos/core": "workspace:*",
 		"@huggingface/transformers": "3.0.2",
 		"@opendocsg/pdf2md": "0.1.32",
 		"@types/uuid": "10.0.0",
