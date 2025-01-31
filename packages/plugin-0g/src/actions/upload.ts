@@ -1,12 +1,12 @@
 import {
-    Action,
-    HandlerCallback,
-    IAgentRuntime,
-    Memory,
-    State,
+    type Action,
+    type HandlerCallback,
+    type IAgentRuntime,
+    type Memory,
+    type State,
     ModelClass,
-    Content,
-    ActionExample,
+    type Content,
+    type ActionExample,
     generateObject,
     elizaLogger,
 } from "@elizaos/core";
@@ -16,7 +16,6 @@ import { composeContext } from "@elizaos/core";
 import { promises as fs } from "fs";
 import { FileSecurityValidator } from "../utils/security";
 import { logSecurityEvent, monitorUpload, monitorFileValidation, monitorCleanup } from '../utils/monitoring';
-import path from 'path';
 import { uploadTemplate } from "../templates/upload";
 
 export interface UploadContent extends Content {
@@ -61,13 +60,13 @@ export const zgUpload: Action = {
                 hasFlowAddr: Boolean(settings.flowAddr)
             });
 
-            const hasRequiredSettings = Object.entries(settings).every(([key, value]) => Boolean(value));
-            
+            const hasRequiredSettings = Object.entries(settings).every(([_key, value]) => Boolean(value));
+
             if (!hasRequiredSettings) {
                 const missingSettings = Object.entries(settings)
                     .filter(([_, value]) => !value)
                     .map(([key]) => key);
-                
+
                 elizaLogger.error("Missing required ZeroG settings", {
                     missingSettings,
                     messageId: message.id
@@ -76,7 +75,7 @@ export const zgUpload: Action = {
             }
 
             const config = {
-                maxFileSize: parseInt(runtime.getSetting("ZEROG_MAX_FILE_SIZE") || "10485760"),
+                maxFileSize: Number.parseInt(runtime.getSetting("ZEROG_MAX_FILE_SIZE") || "10485760"),
                 allowedExtensions: runtime.getSetting("ZEROG_ALLOWED_EXTENSIONS")?.split(",") || [".pdf", ".png", ".jpg", ".jpeg", ".doc", ".docx"],
                 uploadDirectory: runtime.getSetting("ZEROG_UPLOAD_DIR") || "/tmp/zerog-uploads",
                 enableVirusScan: runtime.getSetting("ZEROG_ENABLE_VIRUS_SCAN") === "true"
@@ -188,7 +187,7 @@ export const zgUpload: Action = {
 
             // Initialize security validator
             const securityConfig = {
-                maxFileSize: parseInt(runtime.getSetting("ZEROG_MAX_FILE_SIZE") || "10485760"),
+                maxFileSize: Number.parseInt(runtime.getSetting("ZEROG_MAX_FILE_SIZE") || "10485760"),
                 allowedExtensions: runtime.getSetting("ZEROG_ALLOWED_EXTENSIONS")?.split(",") || [".pdf", ".png", ".jpg", ".jpeg", ".doc", ".docx"],
                 uploadDirectory: runtime.getSetting("ZEROG_UPLOAD_DIR") || "/tmp/zerog-uploads",
                 enableVirusScan: runtime.getSetting("ZEROG_ENABLE_VIRUS_SCAN") === "true"

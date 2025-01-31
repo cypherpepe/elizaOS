@@ -1,19 +1,19 @@
 import {
-    ActionExample,
+    type ActionExample,
     composeContext,
     elizaLogger,
     generateObject,
-    HandlerCallback,
-    IAgentRuntime,
-    Memory,
+    type HandlerCallback,
+    type IAgentRuntime,
+    type Memory,
     ModelClass,
-    State,
+    type State,
     type Action,
 } from "@elizaos/core";
 import { z } from "zod";
 import { topicsProvider } from "../providers/topics";
 import { getInferenceTemplate } from "../templates";
-import { AlloraAPIClient, ChainSlug } from "@alloralabs/allora-sdk";
+import { AlloraAPIClient, type ChainSlug } from "@alloralabs/allora-sdk";
 
 interface InferenceFields {
     topicId: number | null;
@@ -127,7 +127,7 @@ export const getInferenceAction: Action = {
             {
                 user: "{{user2}}",
                 content: {
-                    text: "Inference provided by Allora Network on topic ETH 5min Prediction (ID: 13): 3393.364326646801085508",
+                    text: "Inference provided by Allora Network on topic ETH 5min (ID: 13): 3393.364326646801085508",
                 },
             },
         ],
