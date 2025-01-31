@@ -29,6 +29,7 @@
         "@elizaos/client-direct": "workspace:*",
         "@elizaos/client-discord": "workspace:*",
         "@elizaos/client-farcaster": "workspace:*",
+        "@elizaos/client-linkedin": "workspace:*",
         "@elizaos/client-lens": "workspace:*",
         "@elizaos/client-telegram": "workspace:*",
         "@elizaos/client-telegram-account": "workspace:*",
