@@ -1669,9 +1669,12 @@ export const generateImage = async (
                           return runtime.getSetting("VENICE_API_KEY");
                       case ModelProviderName.LIVEPEER:
                           return runtime.getSetting("LIVEPEER_GATEWAY_URL");
+                      case ModelProviderName.IDEOGRAM:
+                          return runtime.getSetting("IDEOGRAM_API_KEY");
                       default:
                           // If no specific match, try the fallback chain
                           return (
+                              runtime.getSetting("IDEOGRAM_API_KEY") ??
                               runtime.getSetting("HEURIST_API_KEY") ??
                               runtime.getSetting("NINETEEN_AI_API_KEY") ??
                               runtime.getSetting("TOGETHER_API_KEY") ??
@@ -1911,6 +1914,75 @@ export const generateImage = async (
             });
 
             return { success: true, data: base64s };
+        } else if (runtime.imageModelProvider === ModelProviderName.IDEOGRAM) {
+            let body: Record<string, any> = {
+                image_request: {
+                    prompt: data.prompt,
+                    model: model,
+                    magic_prompt_option: (runtime.getSetting("IDEOGRAM_MAGIC_PROMPT") || "auto").toUpperCase(),
+                    style_type: (runtime.getSetting("IDEOGRAM_STYLE_TYPE") || "auto").toUpperCase(),
+                    resolution: `RESOLUTION_${data.width}_${data.height}`,
+                    num_images: data.count || 1,
+                },
+            }
+            if (data.negativePrompt) {
+                body.image_request.negative_prompt = data.negativePrompt;
+            }
+            if (runtime.getSetting("IDEOGRAM_COLOR_PALETTE")) {
+                body.image_request.color_palette = {
+                    name: runtime.getSetting("IDEOGRAM_COLOR_PALETTE").toUpperCase()
+                }
+            }
+            if (data.seed) {
+                body.image_request.seed = data.seed;
+            }
+
+            let jsonBody = JSON.stringify(body);
+            const response = await fetch(
+                "https://api.ideogram.ai/generate",
+                {
+                    method: "POST",
+                    headers: {
+                        "Api-Key": apiKey,
+                        "Content-Type": "application/json",
+                    },
+                    body: jsonBody,
+                },
+            );
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(`Failed to generate image with body ${jsonBody}: ${response.statusText} : ${result}`);
+            }
+
+            if (!result.data?.length) {
+                throw new Error("No images generated");
+            }
+
+            const base64Images = await Promise.all(
+                result.data.map(async (image) => {
+                    if (!image.url) {
+                        throw new Error(
+                            "Empty base64 string in Nineteen AI response"
+                        );
+                    }
+                    elizaLogger.debug(`Image URL: ${image.url}`);
+
+                    const imageResponse = await fetch(image.url);
+                    if (!imageResponse.ok) {
+                        throw new Error(
+                            `Failed to fetch image: ${imageResponse.statusText}`
+                        );
+                    }
+
+                    const blob = await imageResponse.blob();
+                    const arrayBuffer = await blob.arrayBuffer();   
+                    const base64 = Buffer.from(arrayBuffer).toString("base64");
+                    return `data:image/jpeg;base64,${base64}`;
+                })
+            );
+
+            return { success: true, data: base64Images };
         } else if (runtime.imageModelProvider === ModelProviderName.LIVEPEER) {
             if (!apiKey) {
                 throw new Error("Livepeer Gateway is not defined");

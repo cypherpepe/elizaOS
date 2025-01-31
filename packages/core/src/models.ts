@@ -669,6 +669,12 @@ export const models: Models = {
             [ModelClass.IMAGE]: { name: "fal-ai/flux-lora", steps: 28 },
         },
     },
+    [ModelProviderName.IDEOGRAM]: {
+        endpoint: "https://api.ideogram.ai",
+        model: {
+            [ModelClass.IMAGE]: { name: settings.IDEOGRAM_MODEL || "V_2"},
+        },
+    },
     [ModelProviderName.GAIANET]: {
         endpoint: settings.GAIANET_SERVER_URL,
         model: {

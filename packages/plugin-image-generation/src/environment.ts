@@ -3,6 +3,7 @@ import { z } from "zod";
 
 export const imageGenEnvSchema = z
     .object({
+        IDEOGRAM_API_KEY: z.string().optional(),
         ANTHROPIC_API_KEY: z.string().optional(),
         NINETEEN_AI_API_KEY: z.string().optional(),
         TOGETHER_API_KEY: z.string().optional(),
@@ -15,6 +16,7 @@ export const imageGenEnvSchema = z
     .refine(
         (data) => {
             return !!(
+                data.IDEOGRAM_API_KEY ||
                 data.ANTHROPIC_API_KEY ||
                 data.NINETEEN_AI_API_KEY ||
                 data.TOGETHER_API_KEY ||
@@ -27,7 +29,7 @@ export const imageGenEnvSchema = z
         },
         {
             message:
-                "At least one of ANTHROPIC_API_KEY, NINETEEN_AI_API_KEY, TOGETHER_API_KEY, HEURIST_API_KEY, FAL_API_KEY, OPENAI_API_KEY, VENICE_API_KEY or LIVEPEER_GATEWAY_URL is required",
+                "At least one of IDEOGRAM_API_KEY, ANTHROPIC_API_KEY, NINETEEN_AI_API_KEY, TOGETHER_API_KEY, HEURIST_API_KEY, FAL_API_KEY, OPENAI_API_KEY, VENICE_API_KEY or LIVEPEER_GATEWAY_URL is required",
         }
     );
 
@@ -62,6 +64,9 @@ export async function validateImageGenConfig(
             LIVEPEER_GATEWAY_URL:
                 runtime.getSetting("LIVEPEER_GATEWAY_URL") ||
                 process.env.LIVEPEER_GATEWAY_URL,
+            IDEOGRAM_API_KEY:
+                runtime.getSetting("IDEOGRAM_API_KEY") ||
+                process.env.IDEOGRAM_API_KEY,
         };
 
         return imageGenEnvSchema.parse(config);

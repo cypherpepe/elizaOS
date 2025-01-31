@@ -90,7 +90,7 @@ const imageGeneration: Action = {
         const livepeerGatewayUrlOk = !!runtime.getSetting(
             "LIVEPEER_GATEWAY_URL"
         );
-
+        const ideogramApiKeyOk = !!runtime.getSetting("IDEOGRAM_API_KEY");
         return (
             anthropicApiKeyOk ||
             togetherApiKeyOk ||
@@ -99,7 +99,8 @@ const imageGeneration: Action = {
             openAiApiKeyOk ||
             veniceApiKeyOk ||
             nineteenAiApiKeyOk ||
-            livepeerGatewayUrlOk
+            livepeerGatewayUrlOk ||
+            ideogramApiKeyOk
         );
     },
     handler: async (
