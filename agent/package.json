@@ -55,6 +55,7 @@
         "@elizaos/plugin-coinmarketcap": "workspace:*",
         "@elizaos/plugin-conflux": "workspace:*",
         "@elizaos/plugin-cosmos": "workspace:*",
+        "@elizaos/plugin-desk-exchange": "workspace:*",
         "@elizaos/plugin-echochambers": "workspace:*",
         "@elizaos/plugin-evm": "workspace:*",
         "@elizaos/plugin-flow": "workspace:*",

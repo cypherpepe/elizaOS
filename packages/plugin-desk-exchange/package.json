@@ -1,0 +1,21 @@
+{
+    "name": "@elizaos/plugin-desk-exchange",
+    "version": "0.1.0",
+    "main": "dist/index.js",
+    "type": "module",
+    "types": "dist/index.d.ts",
+    "dependencies": {
+        "@elizaos/core": "workspace:*",
+        "zod": "^3.23.8",
+        "ethers": "^6.13.5",
+        "axios": "^1.7.9"
+    },
+    "devDependencies": {
+        "@types/node": "^20.0.0",
+        "tsup": "8.3.5"
+    },
+    "scripts": {
+        "build": "tsup --format esm --dts",
+        "dev": "tsup --format esm --dts --watch"
+    }
+}
