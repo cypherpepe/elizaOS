@@ -119,6 +119,7 @@
         "@elizaos/plugin-lightning": "workspace:*",
         "@elizaos/plugin-b2": "workspace:*",
         "@elizaos/plugin-nft-collections": "workspace:*",
+        "@elizaos/plugin-fuse": "workspace:*",
         "@elizaos/plugin-pyth-data": "workspace:*",
         "@elizaos/plugin-openai": "workspace:*",
         "@elizaos/plugin-devin": "workspace:*",
