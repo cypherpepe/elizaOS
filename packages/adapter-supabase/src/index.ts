@@ -167,6 +167,18 @@ export class SupabaseDatabaseAdapter extends DatabaseAdapter {
         return true;
     }
 
+    async updateAccount(account: Account): Promise<boolean> {
+        const { error } = await this.supabase
+            .from("accounts")
+            .update(account)
+            .eq("id", account.id);
+        if (error) {
+            elizaLogger.error(error.message);
+            return false;
+        }
+        return true;
+    }
+
     async getActorDetails(params: { roomId: UUID }): Promise<Actor[]> {
         try {
             const response = await this.supabase

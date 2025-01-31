@@ -124,6 +124,25 @@ export class SqliteDatabaseAdapter
         }
     }
 
+    async updateAccount(account: Account): Promise<boolean> {
+        try {
+            const sql = "UPDATE accounts SET name = ?, username = ?, email = ?, avatarUrl = ?, details = ? WHERE id = ?";
+            this.db
+                .prepare(sql)
+                .run(
+                    account.name,
+                    account.username,
+                    account.email,
+                    account.avatarUrl,
+                    JSON.stringify(account.details),
+                    account.id);
+            return true;
+        } catch (error) {
+            console.log("Error updating account", error);
+            return false;
+        }
+    }
+
     async getActorDetails(params: { roomId: UUID }): Promise<Actor[]> {
         const sql = `
       SELECT a.id, a.name, a.username, a.details

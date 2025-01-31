@@ -322,6 +322,20 @@ export class MongoDBDatabaseAdapter
         }
     }
 
+    async updateAccount(account: Account): Promise<boolean> {
+        await this.ensureConnection();
+        try {
+            await this.database.collection('accounts').updateOne(
+                { id: account.id },
+                { $set: { name: account.name, username: account.username, details: JSON.stringify(account.details) } }
+            );
+            return true;
+        } catch (error) {
+            console.error("Error updating account:", error);
+            return false;
+        }
+    }
+
     async getActorDetails(params: { roomId: UUID }): Promise<Actor[]> {
         await this.ensureConnection();
         const actors = await this.database.collection('participants')

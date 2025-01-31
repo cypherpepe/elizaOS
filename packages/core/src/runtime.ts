@@ -1379,6 +1379,30 @@ Text: ${attachment.text}
             })
             .join("\n\n");
 
+        const formattedCharacterEmailExamples = this.character.emailExamples
+            .sort(() => 0.5 - Math.random())
+            .slice(0, 5)
+            .map((example) => {
+                const exampleNames = Array.from({ length: 5 }, () =>
+                    uniqueNamesGenerator({ dictionaries: [names] })
+                );
+
+                return example
+                    .map((message) => {
+                        let messageString = `${message.user}: ${message.content.text}`;
+                        exampleNames.forEach((name, index) => {
+                            const placeholder = `{{user${index + 1}}}`;
+                            messageString = messageString.replaceAll(
+                                placeholder,
+                                name
+                            );
+                        });
+                        return messageString;
+                    })
+                    .join("\n");
+            })
+            .join("\n\n");
+
         const getRecentInteractions = async (
             userA: UUID,
             userB: UUID,
@@ -1544,6 +1568,14 @@ Text: ${attachment.text}
                     ? addHeader(
                           `# Example Conversations for ${this.character.name}`,
                           formattedCharacterMessageExamples,
+                      )
+                    : "",
+            characterEmailExamples:
+                formattedCharacterEmailExamples &&
+                formattedCharacterEmailExamples.replaceAll("\n", "").length > 0
+                    ? addHeader(
+                          `# Example Emails for ${this.character.name}`,
+                          formattedCharacterEmailExamples
                       )
                     : "",
             messageDirections:

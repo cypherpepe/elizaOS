@@ -1247,3 +1247,31 @@ Will throw an error if the circuit breaker is open or if the operation fails
 #### Defined in
 
 [packages/core/src/database.ts:391](https://github.com/elizaOS/eliza/blob/main/packages/core/src/database.ts#L391)
+
+---
+
+### updateAccount()
+
+> `abstract` **updateAccount**(`account`): `Promise`\<`boolean`\>
+
+Updates an existing account in the database.
+
+#### Parameters
+
+• **account**: [`Account`](../interfaces/Account.md)
+
+The account object with updated properties.
+
+#### Returns
+
+`Promise`\<`boolean`\>
+
+A Promise that resolves to a boolean indicating success or failure.
+
+#### Implementation of
+
+[`IDatabaseAdapter`](../interfaces/IDatabaseAdapter.md).[`updateAccount`](../interfaces/IDatabaseAdapter.md#updateAccount)
+
+#### Defined in
+
+[packages/core/src/database.ts:86](https://github.com/elizaOS/eliza/blob/main/packages/core/src/database.ts#L86)

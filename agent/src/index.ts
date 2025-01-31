@@ -7,6 +7,7 @@ import { SupabaseDatabaseAdapter } from "@elizaos/adapter-supabase";
 import { AutoClientInterface } from "@elizaos/client-auto";
 import { DiscordClientInterface } from "@elizaos/client-discord";
 import { InstagramClientInterface } from "@elizaos/client-instagram";
+import { GmailClientInterface } from "@elizaos/client-gmail";
 import { LensAgentClient } from "@elizaos/client-lens";
 import { SlackClientInterface } from "@elizaos/client-slack";
 import { TelegramClientInterface } from "@elizaos/client-telegram";
@@ -814,6 +815,11 @@ export async function initializeClients(
     if (clientTypes.includes(Clients.DISCORD)) {
         const discordClient = await DiscordClientInterface.start(runtime);
         if (discordClient) clients.discord = discordClient;
+    }
+
+    if (clientTypes.includes(Clients.GMAIL)) {
+        const gmailClient = await GmailClientInterface.start(runtime);
+        if (gmailClient) clients.gmail = gmailClient;
     }
 
     if (clientTypes.includes(Clients.TELEGRAM)) {

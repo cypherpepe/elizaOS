@@ -447,6 +447,26 @@ export class PostgresDatabaseAdapter
         }, "createAccount");
     }
 
+    async updateAccount(account: Account): Promise<boolean> {
+        return this.withDatabase(async () => {
+            try {
+                await this.pool.query(
+                    `UPDATE accounts SET name = $1, username = $2, email = $3, "avatarUrl" = $4, details = $5 WHERE id = $6`,
+                    [account.name, account.username, account.email, account.avatarUrl, JSON.stringify(account.details), account.id]
+                );
+                return true;
+            } catch (error) {
+                elizaLogger.error("Error creating account:", {
+                    error:
+                        error instanceof Error ? error.message : String(error),
+                    accountId: account.id,
+                    name: account.name, // Only log non-sensitive fields
+                });
+                return false; // Return false instead of throwing to maintain existing behavior
+            }
+        }, "updateAccount");
+    }
+
     async getActorById(params: { roomId: UUID }): Promise<Actor[]> {
         return this.withDatabase(async () => {
             const { rows } = await this.pool.query(

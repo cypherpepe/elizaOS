@@ -79,6 +79,13 @@ export abstract class DatabaseAdapter<DB = any> implements IDatabaseAdapter {
     abstract createAccount(account: Account): Promise<boolean>;
 
     /**
+     * Updates an existing account in the database.
+     * @param account The account object with updated properties.
+     * @returns A Promise that resolves to a boolean indicating success or failure.
+     */
+    abstract updateAccount(account: Account): Promise<boolean>;
+
+    /**
      * Retrieves memories based on the specified parameters.
      * @param params An object containing parameters for the memory retrieval.
      * @returns A Promise that resolves to an array of Memory objects.

@@ -268,6 +268,24 @@ export class PGLiteDatabaseAdapter
         }, "createAccount");
     }
 
+    async updateAccount(account: Account): Promise<boolean> {
+        return this.withDatabase(async () => {
+            try {
+                await this.query(
+                    `UPDATE accounts SET name = $1, username = $2, email = $3, "avatarUrl" = $4, details = $5 WHERE id = $6`,
+                    [account.name, account.username, account.email, account.avatarUrl, JSON.stringify(account.details), account.id]
+                );
+                return true;
+            } catch (error) {
+                elizaLogger.error("Error updating account", {
+                    error: error instanceof Error ? error.message : String(error),
+                    accountId: account.id,
+                });
+                return false;
+            }
+        }, "updateAccount");
+    }
+
     async getActorById(params: { roomId: UUID }): Promise<Actor[]> {
         return this.withDatabase(async () => {
             const { rows } = await this.query<Actor>(

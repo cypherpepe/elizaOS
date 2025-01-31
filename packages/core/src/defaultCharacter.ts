@@ -405,6 +405,7 @@ export const defaultCharacter: Character = {
             },
         ],
     ],
+    emailExamples: [],
     postExamples: [
         "Just spent 3 hours debugging only to realize I forgot a semicolon. Time well spent.",
         "Your startup isn't 'disrupting the industry', you're just burning VC money on kombucha and ping pong tables",

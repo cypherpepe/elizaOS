@@ -180,6 +180,26 @@ export class SqlJsDatabaseAdapter
         }
     }
 
+    async updateAccount(account: Account): Promise<boolean> {
+        try {
+            const sql = "UPDATE accounts SET name = ?, username = ?, email = ?, avatarUrl = ?, details = ? WHERE id = ?";
+            const stmt = this.db.prepare(sql);
+            stmt.run([
+                account.name,
+                account.username || "",
+                account.email || "",
+                account.avatarUrl || "",
+                JSON.stringify(account.details),
+                account.id
+            ]);
+            stmt.free();
+            return true;
+        } catch (error) {
+            elizaLogger.error("Error updating account", error);
+            return false;
+        }
+    }
+
     async getActorById(params: { roomId: UUID }): Promise<Actor[]> {
         const sql = `
       SELECT a.id, a.name, a.username, a.details

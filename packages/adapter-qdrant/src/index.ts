@@ -203,6 +203,10 @@ export class QdrantDatabaseAdapter  extends DatabaseAdapter<QdrantClient>  imple
         return Promise.resolve(false);
     }
 
+    async updateAccount(account: Account): Promise<boolean> {
+        return Promise.resolve(false);
+    }
+
     async createGoal(goal: Goal): Promise<void> {
         return Promise.resolve(undefined);
     }
