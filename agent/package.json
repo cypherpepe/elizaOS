@@ -57,6 +57,7 @@
         "@elizaos/plugin-cosmos": "workspace:*",
         "@elizaos/plugin-echochambers": "workspace:*",
         "@elizaos/plugin-evm": "workspace:*",
+        "@elizaos/plugin-edwin": "workspace:*",
         "@elizaos/plugin-flow": "workspace:*",
         "@elizaos/plugin-gelato": "workspace:*",
         "@elizaos/plugin-giphy": "workspace:*",
