@@ -191,3 +191,4 @@ We now have a [paper](https://arxiv.org/pdf/2501.06781) you can cite for the Eli
 
 [![Star History Chart](https://api.star-history.com/svg?repos=elizaos/eliza&type=Date)](https://star-history.com/#elizaos/eliza&Date)
 Commit 1 line
+Commit 2 line
